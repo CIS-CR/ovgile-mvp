@@ -3,32 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido Custom OVGILE</title>
+    <title>Pedido Custom – OVGILE</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+    <div class="container">
+        <h1>Pedido Custom – OVGILE</h1>
+        <p class="subtitle">MVP v1.0</p>
 
-<div class="container">
-    <h1>Pedido Custom – OVGILE</h1>
-    <p class="subtitle">MVP v1.0</p>
+        <form id="surfForm">
 
-    <form id="surfForm">
+            <h2>1. Tipo de Tabla</h2>
+            <select name="tipo_tabla" required>
+                <option value="">Seleccione</option>
+                <option>Shortboard</option>
+                <option>Longboard</option>
+                <option>Fish</option>
+                <option>Step Up</option>
+                <option>Fun Board</option>
+            </select>
 
-        <h2>1. Tipo de Tabla</h2>
-        <select name="tipo_tabla" required>
-            <option value="">Seleccione</option>
-            <option>Shortboard</option>
-            <option>Longboard</option>
-            <option>Fish</option>
-            <option>Step Up</option>
-            <option>Fun Board</option>
-        </select>
+            <h2>2. Marca / Shaper</h2>
+            <select name="marca" required>
+                <option value="">Seleccione</option>
+                <option>Nightmare Shapes</option>
+                <option>Kailani</option>
+                <option>Channel Islands</option>
+                <option>Wooster</option>
+                <option>Lost</option>
+            </select>
 
-        <h2>2. Marca / Shaper</h2>
-        <select name="marca" required>
-            <option value="">Seleccione</option>
-            <option>Nightmare Shapes</option>
-            <option>Kailani</option>
-            <option>Channel Islands</option>
-            <option>Wooster</option>
-            <option>Lost</option>
+            <h2>3. Datos del Cliente</h2>
+            <input type="text" name="nombre" placeholder="Nombre completo" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="tel" name="telefono" placeholder="Teléfono / WhatsApp" required>
+
+            <div class="columns">
+                <input type="number" name="edad" placeholder="Edad" required>
+                <input type="text" name="altura" placeholder="Altura (cm o ft/in)" required>
+                <input type="text" name="peso" placeholder="Peso (kg o lbs)" required>
+            </div>
+
+            <label>Nivel de Surf</label>
+            <select name="nivel" required>
+                <option value="">Seleccione</option>
+                <option>Principiante</option>
+                <option>Intermedio</option>
+                <option>Avanzado</option>
+            </select>
+
+            <h2>4. Especificaciones</h2>
+            <input type="text" name="modelo" placeholder="Modelo (ej: StickShift)" required>
+
+            <div class="columns">
+                <input type="text" name="largo" placeholder="Largo (ft/in)" required>
+                <input type="text" name="ancho" placeholder="Ancho (in)" required>
+                <input type="text" name="grosor" placeholder="Grosor (in)" required>
+            </div>
+
+            <input type="text" name="volumen" placeholder="Volumen deseado (L) – opcional">
+
+            <label>Construcción</label>
+            <select name="construccion" required>
+                <option value="">Seleccione</option>
+                <option>PU</option>
+                <option>Epoxy</option>
+            </select>
+
+            <h2>5. Quillas</h2>
+            <label>Sistema</label>
+            <select name="quillas" required>
+                <option value="">Seleccione</option>
+                <option>FCS</option>
+                <option>Futures</option>
+                <option>US Box</option>
+            </select>
+
+            <label>Configuración</label>
+            <select name="config_quillas" required>
+                <option value="">Seleccione</option>
+                <option>Single</option>
+                <option>Twin</option>
+                <option>Twin + Trailer</option>
+                <option>Thruster</option>
+                <option>Quad</option>
+                <option>Five Fin</option>
+                <option>2+1</option>
+            </select>
+
+            <h2>6. Notas</h2>
+            <textarea name="notas" placeholder="Notas adicionales (opcional)"></textarea>
+
+            <div class="checkboxes">
+                <label><input type="checkbox" required> Confirmo que la información ingresada es correcta</label>
+            </div>
+
+            <button type="submit">Enviar Pedido</button>
+        </form>
+
+        <p id="statusMsg"></p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

@@ -11,14 +11,11 @@ document.getElementById("surfForm").addEventListener("submit", async function (e
     document.getElementById("statusMsg").innerText = "Enviando pedido...";
 
     try {
-        const resp = await fetch("https://ovgile-handler.colinisaunders.workers.dev/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        });
-
+        const resp = await fetch("https://ovgile-handler.colinisaunders.workers.dev", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+});
         if (resp.ok) {
             document.getElementById("statusMsg").innerText = "Pedido enviado con éxito 🎉";
             form.reset();

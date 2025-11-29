@@ -31,3 +31,4 @@ document.getElementById("surfForm").addEventListener("submit", async function(e)
         document.getElementById("statusMsg").innerText = "No se pudo conectar con el servidor.";
     }
 });
+

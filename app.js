@@ -7,10 +7,10 @@ document.getElementById("surfForm").addEventListener("submit", async function(e)
     document.getElementById("statusMsg").innerText = "Enviando pedido...";
 
     try {
-        const resp = await fetch("YOUR_WORKER_URL_HERE", {
-            method: "POST",
-            body: formData
-        });
+        const resp = await fetch("https://ovgile-handler.colinisaunders.workers.dev", {
+    method: "POST",
+    body: formData
+});
 
         if (resp.ok) {
             document.getElementById("statusMsg").innerText = "Pedido enviado con éxito 🎉";

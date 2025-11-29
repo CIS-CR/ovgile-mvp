@@ -1,34 +1,31 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedido Custom OVGILE</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+document.getElementById("surfForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-<div class="container">
-    <h1>Pedido Custom – OVGILE</h1>
-    <p class="subtitle">MVP v1.0</p>
+    const form = e.target;
+    const data = {};
 
-    <form id="surfForm">
+    new FormData(form).forEach((value, key) => {
+        data[key] = value;
+    });
 
-        <h2>1. Tipo de Tabla</h2>
-        <select name="tipo_tabla" required>
-            <option value="">Seleccione</option>
-            <option>Shortboard</option>
-            <option>Longboard</option>
-            <option>Fish</option>
-            <option>Step Up</option>
-            <option>Fun Board</option>
-        </select>
+    document.getElementById("statusMsg").innerText = "Enviando...";
 
-        <h2>2. Marca / Shaper</h2>
-        <select name="marca" required>
-            <option value="">Seleccione</option>
-            <option>Nightmare Shapes</option>
-            <option>Kailani</option>
-            <option>Channel Islands</option>
-            <option>Wooster</option>
-            <option>Lost</option>
+    try {
+        const resp = await fetch("https://ovgile-handler.colinisaunders.workers.dev", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        if (resp.ok) {
+            document.getElementById("statusMsg").innerText = "Pedido enviado con éxito 🎉";
+            form.reset();
+        } else {
+            document.getElementById("statusMsg").innerText = "Error al enviar.";
+        }
+
+    } catch (err) {
+        document.getElementById("statusMsg").innerText = "No se pudo conectar con el servidor.";
+    }
+});
+

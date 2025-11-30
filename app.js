@@ -11,7 +11,7 @@ document.getElementById("surfForm").addEventListener("submit", async function (e
     document.getElementById("statusMsg").innerText = "Enviando pedido...";
 
     try {
-        const resp = await fetch("https://ovgile-handler.colinisaunders.workers.dev/", {
+        const resp = await fetch("https://api.ovgile.com/order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)

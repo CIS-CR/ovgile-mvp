@@ -1,115 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Surfboard Order Generator</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Service Desk – MVP</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-    <div class="container">
-        <h1>Custom Surfboard Order Generator</h1>
-        <p class="subtitle">Fill in the form to generate your order and send it directly to the production line.</p>
+  <div class="container">
+    <h1>Service Desk</h1>
+    <p class="subtitle">Envía tu solicitud y la registraremos como un ticket de soporte.</p>
 
-        <form id="surfForm">
+    <form id="surfForm">
+      <h2>1. Información del solicitante</h2>
+      <input type="text" name="nombre" placeholder="Nombre completo" required />
+      <input type="email" name="email" placeholder="Correo electrónico" required />
 
-            <h2>1. Board Type</h2>
-            <select name="tipo_tabla" required>
-                <option value="">Select</option>
-                <option>Shortboard</option>
-                <option>Longboard</option>
-                <option>Fish</option>
-                <option>Step Up</option>
-                <option>Fun Board</option>
-            </select>
+      <h2>2. Clasificación</h2>
 
-            <h2>2. Brand / Shaper</h2>
-            <select name="marca" required>
-                <option value="">Select</option>
-                <option>Nightmare Shapes</option>
-                <option>Kailani</option>
-                <option>Channel Islands</option>
-                <option>Wooster</option>
-                <option>Lost</option>
-            </select>
+      <label>Tipo de solicitud</label>
+      <select name="tipo_solicitud" required>
+        <option value="">Seleccionar</option>
+        <option>Incidencia</option>
+        <option>Solicitud de servicio</option>
+        <option>Consulta</option>
+        <option>Emergencia</option>
+      </select>
 
-            <h2>3. Customer Information</h2>
-            <input type="text" name="nombre" placeholder="Full Name" required>
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="tel" name="telefono" placeholder="Phone / WhatsApp" required>
+      <label>Categoría</label>
+      <select name="categoria" required>
+        <option value="">Seleccionar</option>
+        <option>Soporte técnico</option>
+        <option>Pagos / facturación</option>
+        <option>Operación / logística</option>
+        <option>Infraestructura</option>
+        <option>Atención al cliente</option>
+        <option>Otro</option>
+      </select>
 
-            <div class="columns">
-                <input type="number" name="edad" placeholder="Age" required>
-                <input type="text" name="altura" placeholder="Height (cm or ft/in)" required>
-                <input type="text" name="peso" placeholder="Weight (kg or lbs)" required>
-            </div>
+      <label>Prioridad</label>
+      <select name="prioridad" required>
+        <option value="">Seleccionar</option>
+        <option>Baja</option>
+        <option>Media</option>
+        <option>Alta</option>
+        <option>Crítica</option>
+      </select>
 
-            <label>Surfing Level</label>
-            <select name="nivel" required>
-                <option value="">Select</option>
-                <option>Beginner</option>
-                <option>Intermediate</option>
-                <option>Advanced</option>
-            </select>
+      <label>Ubicación (opcional)</label>
+      <select name="location">
+        <option value="">Seleccionar ubicación</option>
+        <option>Granja 1</option>
+        <option>Granja 2</option>
+        <option>Oficina</option>
+        <option>Matadero</option>
+      </select>
 
-            <h2>4. Specifications</h2>
-            <input type="text" name="modelo" placeholder="Model (e.g., StickShift)" required>
+      <h2>3. Detalle</h2>
+      <input type="text" name="asunto" placeholder="Asunto (resumen corto)" maxlength="120" required />
+      <textarea name="descripcion" placeholder="Describe el problema o solicitud. Incluye desde cuándo ocurre y cualquier detalle útil." required></textarea>
 
-            <div class="columns">
-                <input type="text" name="largo" placeholder="Length (ft/in)" required>
-                <input type="text" name="ancho" placeholder="Width (in)" required>
-                <input type="text" name="grosor" placeholder="Thickness (in)" required>
-            </div>
+      <div class="checkboxes">
+        <label>
+          <input type="checkbox" name="confirmacion" value="true" required />
+          Confirmo que la información proporcionada es correcta
+        </label>
+      </div>
 
-            <input type="text" name="volumen" placeholder="Desired Volume (L) – optional">
+      <button type="submit">Enviar solicitud</button>
+    </form>
 
-            <label>Construction</label>
-            <select name="construccion" required>
-                <option value="">Select</option>
-                <option>PU</option>
-                <option>Epoxy</option>
-            </select>
+    <p id="statusMsg"></p>
+  </div>
 
-            <h2>5. Fins</h2>
-            <label>System</label>
-            <select name="quillas" required>
-                <option value="">Select</option>
-                <option>FCS</option>
-                <option>Futures</option>
-                <option>US Box</option>
-            </select>
-
-            <label>Configuration</label>
-            <select name="config_quillas" required>
-                <option value="">Select</option>
-                <option>Single</option>
-                <option>Twin</option>
-                <option>Twin + Trailer</option>
-                <option>Thruster</option>
-                <option>Quad</option>
-                <option>Five Fin</option>
-                <option>2+1</option>
-            </select>
-
-            <h2>6. Notes</h2>
-            <textarea name="notas" placeholder="Additional notes (optional)"></textarea>
-
-            <div class="checkboxes">
-                <label>
-                    <input type="checkbox" name="confirmacion" value="true" required>
-                    I confirm that all the information provided is correct
-                </label>
-            </div>
-
-            <button type="submit">Submit Order</button>
-        </form>
-
-        <p id="statusMsg"></p>
-    </div>
-
-    <script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
+
 
 

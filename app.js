@@ -1,33 +1,55 @@
 document.getElementById("surfForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const form = e.target;
-    const formData = new FormData(form);
+  const form = e.target;
+  const formData = new FormData(form);
 
-    // Convertir FormData a JSON
-    const data = {};
-    formData.forEach((value, key) => data[key] = value);
+  // Convertir FormData a JSON
+  const data = {};
+  formData.forEach((value, key) => (data[key] = value));
 
-    document.getElementById("statusMsg").innerText = "Enviando pedido...";
+  // Limpieza mínima (MVP)
+  // - El checkbox "confirmacion" no lo necesita el Worker
+  // - Si location viene vacío, lo eliminamos para evitar ruido
+  delete data.confirmacion;
+  if (!data.location || String(data.location).trim() === "") {
+    delete data.location;
+  }
 
-    try {
-        const resp = await fetch("https://api.ovgile.com/order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
+  const statusEl = document.getElementById("statusMsg");
+  statusEl.innerText = "Enviando solicitud...";
 
-        if (resp.ok) {
-            document.getElementById("statusMsg").innerText = "Pedido enviado con éxito 🎉";
-            form.reset();
-        } else {
-            document.getElementById("statusMsg").innerText = "Error al enviar. Intente de nuevo.";
-        }
+  try {
+    const resp = await fetch("https://api.ovgile.com/order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-    } catch (err) {
-        document.getElementById("statusMsg").innerText = "No se pudo conectar con el servidor.";
+    if (resp.ok) {
+      // Si el Worker responde JSON { success: true, orderID }
+      let payload = null;
+      try {
+        payload = await resp.json();
+      } catch (_) {}
+
+      const ticketText = payload?.orderID ? ` Ticket: ${payload.orderID}` : "";
+      statusEl.innerText = `Solicitud enviada con éxito.${ticketText}`;
+      form.reset();
+      return;
     }
+
+    // Manejo de error con detalle
+    const errText = await resp.text();
+    statusEl.innerText = errText
+      ? `Error: ${errText}`
+      : "Error al enviar. Intente de nuevo.";
+
+  } catch (err) {
+    statusEl.innerText = "No se pudo conectar con el servidor.";
+  }
 });
+
 
 
 

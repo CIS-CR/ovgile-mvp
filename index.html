@@ -5,6 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SOLICITUD DE MANTENIMIENTO / SERVICIO – MVP</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Extra mínimo (por si tu style.css no lo cubre) */
+    .vehicle-preview {
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 10px;
+      background: rgba(0,0,0,.02);
+      display: none;
+    }
+    .vehicle-preview h3{
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      opacity: .8;
+    }
+    .vehicle-grid{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .readonly-field label{
+      display:block;
+      font-size: 12px;
+      opacity: .7;
+      margin-bottom: 4px;
+    }
+    .readonly-field input{
+      width: 100%;
+      padding: 10px;
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 8px;
+      background: #f7f7f7;
+    }
+    @media(min-width: 520px){
+      .vehicle-grid{ grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
 
 <body>
@@ -12,13 +49,10 @@
     <h1>SOLICITUD DE MANTENIMIENTO / SERVICIO</h1>
     <p class="subtitle">Reporta una incidencia de flota. Solo pedimos lo mínimo para iniciar el proceso.</p>
 
-    <!-- IMPORTANTE:
-      Mantengo id="surfForm" para que tu app.js actual siga funcionando sin cambios.
-      Tu app.js (actual) probablemente serializa FormData → JSON y lo envía a tu endpoint/Worker/Trello como hoy.
-    -->
+    <!-- Mantengo id="surfForm" para compatibilidad con tu app.js actual -->
     <form id="surfForm">
 
-      <!-- 1) Reportante (mantengo nombre/email porque ya existen en tu MVP) -->
+      <!-- 1) Reportante (se mantiene como tu MVP actual) -->
       <h2>1. Información del solicitante</h2>
       <input type="text" name="nombre" placeholder="Nombre completo" required />
       <input type="email" name="email" placeholder="Correo electrónico" required />
@@ -32,7 +66,38 @@
         <!-- Se llena por JS -->
       </select>
 
-      <!-- Snapshot heredado (se guarda en el ticket aunque cambie el master) -->
+      <!-- Vista previa (VISIBLE) para validar datos heredados -->
+      <div id="vehiclePreview" class="vehicle-preview" aria-live="polite">
+        <h3>Datos del vehículo (verificación)</h3>
+        <div class="vehicle-grid">
+          <div class="readonly-field">
+            <label>Placa</label>
+            <input type="text" id="placa_view" readonly />
+          </div>
+          <div class="readonly-field">
+            <label>Marca</label>
+            <input type="text" id="marca_view" readonly />
+          </div>
+          <div class="readonly-field">
+            <label>Modelo</label>
+            <input type="text" id="modelo_view" readonly />
+          </div>
+          <div class="readonly-field">
+            <label>Color</label>
+            <input type="text" id="color_view" readonly />
+          </div>
+          <div class="readonly-field">
+            <label>Año</label>
+            <input type="text" id="anio_view" readonly />
+          </div>
+          <div class="readonly-field">
+            <label>Centro de costo</label>
+            <input type="text" id="centro_costo_view" readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- Snapshot heredado (se envía a Trello igual que antes, vía app.js) -->
       <input type="hidden" id="placa" name="placa" />
       <input type="hidden" id="marca" name="marca" />
       <input type="hidden" id="modelo" name="modelo" />
@@ -84,22 +149,10 @@
         </label>
       </div>
 
-      <!-- 5) Evidencia (preparado, pero si tu backend aún no soporta archivos, lo dejamos opcional) -->
-      <h2>5. Evidencia (opcional por ahora)</h2>
-      <label for="media">Fotos / video</label>
-      <input
-        type="file"
-        id="media"
-        name="media"
-        accept="image/*,video/*"
-        multiple
-      />
-      <p class="hint">Si el sistema aún no soporta archivos, puedes dejar este campo sin usar por ahora.</p>
+      <!-- ✅ Campo #5 (evidencia) eliminado en esta etapa -->
 
       <!-- CTA -->
       <button type="submit" id="submitBtn">Enviar solicitud</button>
-
-      <!-- Mensaje de estado (tu app.js ya lo usa en varios MVPs con id=statusMsg) -->
       <p id="statusMsg" class="status"></p>
     </form>
   </div>
@@ -230,13 +283,13 @@
     ];
 
     const vehiculoSelect = document.getElementById("vehiculo_id");
+    const preview = document.getElementById("vehiclePreview");
 
     function optionLabel(v) {
-      // Visible en dropdown: PLACA — Marca Modelo (CC-xxxx)
       return `${v.placa} — ${v.marca} ${v.modelo} (${v.centro_costo_id})`;
     }
 
-    // Poblar dropdown
+    // Poblar dropdown (solo activos)
     for (const v of VEHICULOS.filter(x => x.estado === "Activo")) {
       const opt = document.createElement("option");
       opt.value = v.vehiculo_id;
@@ -244,26 +297,46 @@
       vehiculoSelect.appendChild(opt);
     }
 
-    // Al seleccionar vehículo, guardamos snapshot en hidden inputs
+    // Helper: set value to both hidden + visible readonly fields
+    function setVehicleSnapshot(v) {
+      // Hidden (se envía)
+      document.getElementById("placa").value = v?.placa || "";
+      document.getElementById("marca").value = v?.marca || "";
+      document.getElementById("modelo").value = v?.modelo || "";
+      document.getElementById("color").value = v?.color || "";
+      document.getElementById("anio").value = v?.anio ? String(v.anio) : "";
+      document.getElementById("vin_serial").value = v?.vin_serial || "";
+      document.getElementById("centro_costo_id").value = v?.centro_costo_id || "";
+      document.getElementById("centro_costo_nombre").value = v?.centro_costo_nombre || "";
+
+      // Visible (verificación)
+      document.getElementById("placa_view").value = v?.placa || "";
+      document.getElementById("marca_view").value = v?.marca || "";
+      document.getElementById("modelo_view").value = v?.modelo || "";
+      document.getElementById("color_view").value = v?.color || "";
+      document.getElementById("anio_view").value = v?.anio ? String(v.anio) : "";
+      document.getElementById("centro_costo_view").value =
+        v ? `${v.centro_costo_id} — ${v.centro_costo_nombre}` : "";
+
+      // Mostrar/ocultar preview
+      preview.style.display = v ? "block" : "none";
+    }
+
     vehiculoSelect.addEventListener("change", (e) => {
       const id = e.target.value;
       const v = VEHICULOS.find(x => x.vehiculo_id === id);
-
-      document.getElementById("placa").value = v ? v.placa : "";
-      document.getElementById("marca").value = v ? v.marca : "";
-      document.getElementById("modelo").value = v ? v.modelo : "";
-      document.getElementById("color").value = v ? v.color : "";
-      document.getElementById("anio").value = v ? String(v.anio) : "";
-      document.getElementById("vin_serial").value = v ? v.vin_serial : "";
-      document.getElementById("centro_costo_id").value = v ? v.centro_costo_id : "";
-      document.getElementById("centro_costo_nombre").value = v ? v.centro_costo_nombre : "";
+      setVehicleSnapshot(v || null);
     });
+
+    // Estado inicial (por si el navegador recuerda selección)
+    setVehicleSnapshot(null);
   </script>
 
-  <!-- Mantengo tu app.js para que los datos lleguen a Trello igual que hoy -->
+  <!-- Mantengo tu app.js para que el envío siga llegando a Trello igual que hoy -->
   <script src="app.js"></script>
 </body>
 </html>
+
 
 
 

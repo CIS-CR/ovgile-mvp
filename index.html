@@ -3,43 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SOLICITUD DE MANTENIMIENTO / SERVICIO – MVP</title>
+  <title>SOLICITUD DE MANTENIMIENTO / SERVICIO</title>
   <link rel="stylesheet" href="style.css" />
+
   <style>
-    /* Extra mínimo (por si tu style.css no lo cubre) */
-    .vehicle-preview {
+    /* Bloque de verificación del vehículo (visible al seleccionar) */
+    .vehicle-preview{
       margin-top: 10px;
       padding: 12px;
       border: 1px solid rgba(0,0,0,.12);
-      border-radius: 10px;
+      border-radius: 12px;
       background: rgba(0,0,0,.02);
       display: none;
     }
     .vehicle-preview h3{
-      margin: 0 0 8px 0;
+      margin: 0 0 10px 0;
       font-size: 14px;
       opacity: .8;
     }
     .vehicle-grid{
       display: grid;
       grid-template-columns: 1fr;
-      gap: 8px;
+      gap: 10px;
     }
     .readonly-field label{
       display:block;
       font-size: 12px;
-      opacity: .7;
+      opacity: .75;
       margin-bottom: 4px;
     }
     .readonly-field input{
       width: 100%;
       padding: 10px;
       border: 1px solid rgba(0,0,0,.12);
-      border-radius: 8px;
+      border-radius: 10px;
       background: #f7f7f7;
     }
-    @media(min-width: 520px){
+    @media(min-width: 560px){
       .vehicle-grid{ grid-template-columns: 1fr 1fr; }
+    }
+    .hint{
+      font-size: 12px;
+      opacity: .7;
+      margin-top: 6px;
     }
   </style>
 </head>
@@ -47,26 +53,27 @@
 <body>
   <div class="container">
     <h1>SOLICITUD DE MANTENIMIENTO / SERVICIO</h1>
-    <p class="subtitle">Reporta una incidencia de flota. Solo pedimos lo mínimo para iniciar el proceso.</p>
+    <p class="subtitle">Envía tu solicitud y la registraremos como un ticket.</p>
 
-    <!-- Mantengo id="surfForm" para compatibilidad con tu app.js actual -->
+    <!-- Mantener este ID es CRÍTICO para tu app.js actual -->
     <form id="surfForm">
 
-      <!-- 1) Reportante (se mantiene como tu MVP actual) -->
       <h2>1. Información del solicitante</h2>
       <input type="text" name="nombre" placeholder="Nombre completo" required />
       <input type="email" name="email" placeholder="Correo electrónico" required />
 
-      <!-- 2) Vehículo -->
+      <!-- Opcional (tu app.js lo limpia si viene vacío) -->
+      <input type="text" name="location" placeholder="Ubicación (opcional)" />
+
       <h2>2. Vehículo (Flota)</h2>
 
       <label for="vehiculo_id">Seleccionar vehículo</label>
       <select id="vehiculo_id" name="vehiculo_id" required>
         <option value="">Seleccionar…</option>
-        <!-- Se llena por JS -->
       </select>
+      <p class="hint">Al seleccionar el vehículo, se asocia automáticamente su centro de costo.</p>
 
-      <!-- Vista previa (VISIBLE) para validar datos heredados -->
+      <!-- Vista visible para validar (solo lectura) -->
       <div id="vehiclePreview" class="vehicle-preview" aria-live="polite">
         <h3>Datos del vehículo (verificación)</h3>
         <div class="vehicle-grid">
@@ -97,7 +104,7 @@
         </div>
       </div>
 
-      <!-- Snapshot heredado (se envía a Trello igual que antes, vía app.js) -->
+      <!-- Snapshot oculto (se envía a tu endpoint tal cual) -->
       <input type="hidden" id="placa" name="placa" />
       <input type="hidden" id="marca" name="marca" />
       <input type="hidden" id="modelo" name="modelo" />
@@ -107,9 +114,7 @@
       <input type="hidden" id="centro_costo_id" name="centro_costo_id" />
       <input type="hidden" id="centro_costo_nombre" name="centro_costo_nombre" />
 
-      <!-- 3) Clasificación -->
       <h2>3. Clasificación</h2>
-
       <label for="categoria">Tipo de incidencia</label>
       <select id="categoria" name="categoria" required>
         <option value="">Seleccionar…</option>
@@ -131,27 +136,19 @@
         required
       ></textarea>
 
-      <!-- 4) Urgencia -->
       <h2>4. Nivel de urgencia</h2>
-
       <div class="radio-group">
-        <label>
-          <input type="radio" name="urgencia" value="Normal" required />
-          Normal
-        </label>
-        <label>
-          <input type="radio" name="urgencia" value="Urgente" />
-          Urgente
-        </label>
-        <label>
-          <input type="radio" name="urgencia" value="Emergencia" />
-          Emergencia
-        </label>
+        <label><input type="radio" name="urgencia" value="Normal" required /> Normal</label>
+        <label><input type="radio" name="urgencia" value="Urgente" /> Urgente</label>
+        <label><input type="radio" name="urgencia" value="Emergencia" /> Emergencia</label>
       </div>
 
-      <!-- ✅ Campo #5 (evidencia) eliminado en esta etapa -->
+      <!-- Checkbox opcional: tu app.js lo elimina (delete confirmacion) -->
+      <label style="display:flex; gap:10px; align-items:center; margin-top:12px;">
+        <input type="checkbox" name="confirmacion" />
+        Confirmo que la información es correcta.
+      </label>
 
-      <!-- CTA -->
       <button type="submit" id="submitBtn">Enviar solicitud</button>
       <p id="statusMsg" class="status"></p>
     </form>
@@ -160,146 +157,35 @@
   <script>
     // ====== Base de datos ejemplo (Flota) – 10 vehículos ======
     const VEHICULOS = [
-      {
-        vehiculo_id: "VH-0001",
-        placa: "FB-1023",
-        marca: "Toyota",
-        modelo: "Hilux",
-        anio: 2021,
-        color: "Blanco",
-        vin_serial: "JTEBX3FJ5M1234567",
-        centro_costo_id: "CC-1001",
-        centro_costo_nombre: "Flota - Hilux 2021 (FB-1023)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0002",
-        placa: "FB-1048",
-        marca: "Toyota",
-        modelo: "Hiace",
-        anio: 2020,
-        color: "Plata",
-        vin_serial: "JTFHX02P0L2345678",
-        centro_costo_id: "CC-1002",
-        centro_costo_nombre: "Flota - Hiace 2020 (FB-1048)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0003",
-        placa: "FB-1102",
-        marca: "Nissan",
-        modelo: "Navara",
-        anio: 2019,
-        color: "Gris",
-        vin_serial: "JN1BD7N23K3456789",
-        centro_costo_id: "CC-1003",
-        centro_costo_nombre: "Flota - Navara 2019 (FB-1102)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0004",
-        placa: "FB-1157",
-        marca: "Mitsubishi",
-        modelo: "L200",
-        anio: 2022,
-        color: "Negro",
-        vin_serial: "MMBJNKB10N4567890",
-        centro_costo_id: "CC-1004",
-        centro_costo_nombre: "Flota - L200 2022 (FB-1157)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0005",
-        placa: "FB-1209",
-        marca: "Ford",
-        modelo: "Ranger",
-        anio: 2018,
-        color: "Azul",
-        vin_serial: "1FTER4FH8J5678901",
-        centro_costo_id: "CC-1005",
-        centro_costo_nombre: "Flota - Ranger 2018 (FB-1209)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0006",
-        placa: "FB-1284",
-        marca: "Chevrolet",
-        modelo: "D-Max",
-        anio: 2020,
-        color: "Rojo",
-        vin_serial: "MPATFS85HJ6789012",
-        centro_costo_id: "CC-1006",
-        centro_costo_nombre: "Flota - D-Max 2020 (FB-1284)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0007",
-        placa: "FB-1331",
-        marca: "Hyundai",
-        modelo: "H-1",
-        anio: 2017,
-        color: "Blanco",
-        vin_serial: "KMHWH81K0HU7890123",
-        centro_costo_id: "CC-1007",
-        centro_costo_nombre: "Flota - H-1 2017 (FB-1331)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0008",
-        placa: "FB-1406",
-        marca: "Kia",
-        modelo: "Bongo",
-        anio: 2019,
-        color: "Gris",
-        vin_serial: "KNCMB7A1XK8901234",
-        centro_costo_id: "CC-1008",
-        centro_costo_nombre: "Flota - Bongo 2019 (FB-1406)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0009",
-        placa: "FB-1490",
-        marca: "Suzuki",
-        modelo: "Vitara",
-        anio: 2021,
-        color: "Verde",
-        vin_serial: "TSMLYD21SMM9012345",
-        centro_costo_id: "CC-1009",
-        centro_costo_nombre: "Flota - Vitara 2021 (FB-1490)",
-        estado: "Activo"
-      },
-      {
-        vehiculo_id: "VH-0010",
-        placa: "FB-1555",
-        marca: "Isuzu",
-        modelo: "NPR",
-        anio: 2016,
-        color: "Blanco",
-        vin_serial: "JALC4W161G0123456",
-        centro_costo_id: "CC-1010",
-        centro_costo_nombre: "Flota - NPR 2016 (FB-1555)",
-        estado: "Activo"
-      }
+      { vehiculo_id:"VH-0001", placa:"FB-1023", marca:"Toyota", modelo:"Hilux", anio:2021, color:"Blanco", vin_serial:"JTEBX3FJ5M1234567", centro_costo_id:"CC-1001", centro_costo_nombre:"Flota - Hilux 2021 (FB-1023)", estado:"Activo" },
+      { vehiculo_id:"VH-0002", placa:"FB-1048", marca:"Toyota", modelo:"Hiace", anio:2020, color:"Plata",  vin_serial:"JTFHX02P0L2345678", centro_costo_id:"CC-1002", centro_costo_nombre:"Flota - Hiace 2020 (FB-1048)", estado:"Activo" },
+      { vehiculo_id:"VH-0003", placa:"FB-1102", marca:"Nissan", modelo:"Navara", anio:2019, color:"Gris",  vin_serial:"JN1BD7N23K3456789", centro_costo_id:"CC-1003", centro_costo_nombre:"Flota - Navara 2019 (FB-1102)", estado:"Activo" },
+      { vehiculo_id:"VH-0004", placa:"FB-1157", marca:"Mitsubishi", modelo:"L200", anio:2022, color:"Negro", vin_serial:"MMBJNKB10N4567890", centro_costo_id:"CC-1004", centro_costo_nombre:"Flota - L200 2022 (FB-1157)", estado:"Activo" },
+      { vehiculo_id:"VH-0005", placa:"FB-1209", marca:"Ford", modelo:"Ranger", anio:2018, color:"Azul",   vin_serial:"1FTER4FH8J5678901", centro_costo_id:"CC-1005", centro_costo_nombre:"Flota - Ranger 2018 (FB-1209)", estado:"Activo" },
+      { vehiculo_id:"VH-0006", placa:"FB-1284", marca:"Chevrolet", modelo:"D-Max", anio:2020, color:"Rojo", vin_serial:"MPATFS85HJ6789012", centro_costo_id:"CC-1006", centro_costo_nombre:"Flota - D-Max 2020 (FB-1284)", estado:"Activo" },
+      { vehiculo_id:"VH-0007", placa:"FB-1331", marca:"Hyundai", modelo:"H-1", anio:2017, color:"Blanco", vin_serial:"KMHWH81K0HU7890123", centro_costo_id:"CC-1007", centro_costo_nombre:"Flota - H-1 2017 (FB-1331)", estado:"Activo" },
+      { vehiculo_id:"VH-0008", placa:"FB-1406", marca:"Kia", modelo:"Bongo", anio:2019, color:"Gris",    vin_serial:"KNCMB7A1XK8901234", centro_costo_id:"CC-1008", centro_costo_nombre:"Flota - Bongo 2019 (FB-1406)", estado:"Activo" },
+      { vehiculo_id:"VH-0009", placa:"FB-1490", marca:"Suzuki", modelo:"Vitara", anio:2021, color:"Verde", vin_serial:"TSMLYD21SMM9012345", centro_costo_id:"CC-1009", centro_costo_nombre:"Flota - Vitara 2021 (FB-1490)", estado:"Activo" },
+      { vehiculo_id:"VH-0010", placa:"FB-1555", marca:"Isuzu", modelo:"NPR", anio:2016, color:"Blanco",   vin_serial:"JALC4W161G0123456", centro_costo_id:"CC-1010", centro_costo_nombre:"Flota - NPR 2016 (FB-1555)", estado:"Activo" }
     ];
 
     const vehiculoSelect = document.getElementById("vehiculo_id");
     const preview = document.getElementById("vehiclePreview");
 
-    function optionLabel(v) {
+    function optionLabel(v){
       return `${v.placa} — ${v.marca} ${v.modelo} (${v.centro_costo_id})`;
     }
 
     // Poblar dropdown (solo activos)
-    for (const v of VEHICULOS.filter(x => x.estado === "Activo")) {
+    VEHICULOS.filter(v => v.estado === "Activo").forEach(v => {
       const opt = document.createElement("option");
       opt.value = v.vehiculo_id;
       opt.textContent = optionLabel(v);
       vehiculoSelect.appendChild(opt);
-    }
+    });
 
-    // Helper: set value to both hidden + visible readonly fields
-    function setVehicleSnapshot(v) {
-      // Hidden (se envía)
+    function setVehicleSnapshot(v){
+      // Hidden (se envía al backend actual)
       document.getElementById("placa").value = v?.placa || "";
       document.getElementById("marca").value = v?.marca || "";
       document.getElementById("modelo").value = v?.modelo || "";
@@ -315,27 +201,25 @@
       document.getElementById("modelo_view").value = v?.modelo || "";
       document.getElementById("color_view").value = v?.color || "";
       document.getElementById("anio_view").value = v?.anio ? String(v.anio) : "";
-      document.getElementById("centro_costo_view").value =
-        v ? `${v.centro_costo_id} — ${v.centro_costo_nombre}` : "";
+      document.getElementById("centro_costo_view").value = v ? `${v.centro_costo_id} — ${v.centro_costo_nombre}` : "";
 
-      // Mostrar/ocultar preview
       preview.style.display = v ? "block" : "none";
     }
 
     vehiculoSelect.addEventListener("change", (e) => {
-      const id = e.target.value;
-      const v = VEHICULOS.find(x => x.vehiculo_id === id);
+      const v = VEHICULOS.find(x => x.vehiculo_id === e.target.value);
       setVehicleSnapshot(v || null);
     });
 
-    // Estado inicial (por si el navegador recuerda selección)
+    // Inicial
     setVehicleSnapshot(null);
   </script>
 
-  <!-- Mantengo tu app.js para que el envío siga llegando a Trello igual que hoy -->
+  <!-- Tu app.js actual (sin cambios) -->
   <script src="app.js"></script>
 </body>
 </html>
+
 
 
 

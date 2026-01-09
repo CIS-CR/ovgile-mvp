@@ -3,80 +3,268 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Central de solicitudes – MVP</title>
+  <title>SOLICITUD DE MANTENIMIENTO / SERVICIO – MVP</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <div class="container">
-    <h1>Service Desk</h1>
-    <p class="subtitle">Envía tu solicitud y la registraremos como un ticket de soporte.</p>
+    <h1>SOLICITUD DE MANTENIMIENTO / SERVICIO</h1>
+    <p class="subtitle">Reporta una incidencia de flota. Solo pedimos lo mínimo para iniciar el proceso.</p>
 
+    <!-- IMPORTANTE:
+      Mantengo id="surfForm" para que tu app.js actual siga funcionando sin cambios.
+      Tu app.js (actual) probablemente serializa FormData → JSON y lo envía a tu endpoint/Worker/Trello como hoy.
+    -->
     <form id="surfForm">
+
+      <!-- 1) Reportante (mantengo nombre/email porque ya existen en tu MVP) -->
       <h2>1. Información del solicitante</h2>
       <input type="text" name="nombre" placeholder="Nombre completo" required />
       <input type="email" name="email" placeholder="Correo electrónico" required />
 
-      <h2>2. Clasificación</h2>
+      <!-- 2) Vehículo -->
+      <h2>2. Vehículo (Flota)</h2>
 
-      <label>Tipo de solicitud</label>
-      <select name="tipo_solicitud" required>
-        <option value="">Seleccionar</option>
-        <option>Incidencia</option>
-        <option>Solicitud de servicio</option>
-        <option>Consulta</option>
-        <option>Emergencia</option>
+      <label for="vehiculo_id">Seleccionar vehículo</label>
+      <select id="vehiculo_id" name="vehiculo_id" required>
+        <option value="">Seleccionar…</option>
+        <!-- Se llena por JS -->
       </select>
 
-      <label>Categoría</label>
-      <select name="categoria" required>
-        <option value="">Seleccionar</option>
-        <option>Soporte técnico</option>
-        <option>Pagos / facturación</option>
-        <option>Operación / logística</option>
-        <option>Infraestructura</option>
-        <option>Atención al cliente</option>
-        <option>Otro</option>
+      <!-- Snapshot heredado (se guarda en el ticket aunque cambie el master) -->
+      <input type="hidden" id="placa" name="placa" />
+      <input type="hidden" id="marca" name="marca" />
+      <input type="hidden" id="modelo" name="modelo" />
+      <input type="hidden" id="color" name="color" />
+      <input type="hidden" id="anio" name="anio" />
+      <input type="hidden" id="vin_serial" name="vin_serial" />
+      <input type="hidden" id="centro_costo_id" name="centro_costo_id" />
+      <input type="hidden" id="centro_costo_nombre" name="centro_costo_nombre" />
+
+      <!-- 3) Clasificación -->
+      <h2>3. Clasificación</h2>
+
+      <label for="categoria">Tipo de incidencia</label>
+      <select id="categoria" name="categoria" required>
+        <option value="">Seleccionar…</option>
+        <option value="Aire acondicionado">Aire acondicionado</option>
+        <option value="Electricidad">Electricidad</option>
+        <option value="Mecánica">Mecánica</option>
+        <option value="Frenos">Frenos</option>
+        <option value="Neumáticos">Neumáticos</option>
+        <option value="Seguridad">Seguridad</option>
+        <option value="Otros">Otros</option>
       </select>
 
-      <label>Prioridad</label>
-      <select name="prioridad" required>
-        <option value="">Seleccionar</option>
-        <option>Baja</option>
-        <option>Media</option>
-        <option>Alta</option>
-        <option>Crítica</option>
-      </select>
+      <label for="descripcion">Descripción del problema</label>
+      <textarea
+        id="descripcion"
+        name="descripcion"
+        placeholder="Ejemplo: el aire acondicionado no enfría y hace ruido al encender."
+        rows="4"
+        required
+      ></textarea>
 
-      <label>Ubicación (opcional)</label>
-      <select name="location">
-        <option value="">Seleccionar ubicación</option>
-        <option>Granja 1</option>
-        <option>Granja 2</option>
-        <option>Oficina</option>
-        <option>Matadero</option>
-      </select>
+      <!-- 4) Urgencia -->
+      <h2>4. Nivel de urgencia</h2>
 
-      <h2>3. Detalle</h2>
-      <input type="text" name="asunto" placeholder="Asunto (resumen corto)" maxlength="120" required />
-      <textarea name="descripcion" placeholder="Describe el problema o solicitud. Incluye desde cuándo ocurre y cualquier detalle útil." required></textarea>
-
-      <div class="checkboxes">
+      <div class="radio-group">
         <label>
-          <input type="checkbox" name="confirmacion" value="true" required />
-          Confirmo que la información proporcionada es correcta
+          <input type="radio" name="urgencia" value="Normal" required />
+          Normal
+        </label>
+        <label>
+          <input type="radio" name="urgencia" value="Urgente" />
+          Urgente
+        </label>
+        <label>
+          <input type="radio" name="urgencia" value="Emergencia" />
+          Emergencia
         </label>
       </div>
 
-      <button type="submit">Enviar solicitud</button>
-    </form>
+      <!-- 5) Evidencia (preparado, pero si tu backend aún no soporta archivos, lo dejamos opcional) -->
+      <h2>5. Evidencia (opcional por ahora)</h2>
+      <label for="media">Fotos / video</label>
+      <input
+        type="file"
+        id="media"
+        name="media"
+        accept="image/*,video/*"
+        multiple
+      />
+      <p class="hint">Si el sistema aún no soporta archivos, puedes dejar este campo sin usar por ahora.</p>
 
-    <p id="statusMsg"></p>
+      <!-- CTA -->
+      <button type="submit" id="submitBtn">Enviar solicitud</button>
+
+      <!-- Mensaje de estado (tu app.js ya lo usa en varios MVPs con id=statusMsg) -->
+      <p id="statusMsg" class="status"></p>
+    </form>
   </div>
 
+  <script>
+    // ====== Base de datos ejemplo (Flota) – 10 vehículos ======
+    const VEHICULOS = [
+      {
+        vehiculo_id: "VH-0001",
+        placa: "FB-1023",
+        marca: "Toyota",
+        modelo: "Hilux",
+        anio: 2021,
+        color: "Blanco",
+        vin_serial: "JTEBX3FJ5M1234567",
+        centro_costo_id: "CC-1001",
+        centro_costo_nombre: "Flota - Hilux 2021 (FB-1023)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0002",
+        placa: "FB-1048",
+        marca: "Toyota",
+        modelo: "Hiace",
+        anio: 2020,
+        color: "Plata",
+        vin_serial: "JTFHX02P0L2345678",
+        centro_costo_id: "CC-1002",
+        centro_costo_nombre: "Flota - Hiace 2020 (FB-1048)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0003",
+        placa: "FB-1102",
+        marca: "Nissan",
+        modelo: "Navara",
+        anio: 2019,
+        color: "Gris",
+        vin_serial: "JN1BD7N23K3456789",
+        centro_costo_id: "CC-1003",
+        centro_costo_nombre: "Flota - Navara 2019 (FB-1102)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0004",
+        placa: "FB-1157",
+        marca: "Mitsubishi",
+        modelo: "L200",
+        anio: 2022,
+        color: "Negro",
+        vin_serial: "MMBJNKB10N4567890",
+        centro_costo_id: "CC-1004",
+        centro_costo_nombre: "Flota - L200 2022 (FB-1157)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0005",
+        placa: "FB-1209",
+        marca: "Ford",
+        modelo: "Ranger",
+        anio: 2018,
+        color: "Azul",
+        vin_serial: "1FTER4FH8J5678901",
+        centro_costo_id: "CC-1005",
+        centro_costo_nombre: "Flota - Ranger 2018 (FB-1209)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0006",
+        placa: "FB-1284",
+        marca: "Chevrolet",
+        modelo: "D-Max",
+        anio: 2020,
+        color: "Rojo",
+        vin_serial: "MPATFS85HJ6789012",
+        centro_costo_id: "CC-1006",
+        centro_costo_nombre: "Flota - D-Max 2020 (FB-1284)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0007",
+        placa: "FB-1331",
+        marca: "Hyundai",
+        modelo: "H-1",
+        anio: 2017,
+        color: "Blanco",
+        vin_serial: "KMHWH81K0HU7890123",
+        centro_costo_id: "CC-1007",
+        centro_costo_nombre: "Flota - H-1 2017 (FB-1331)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0008",
+        placa: "FB-1406",
+        marca: "Kia",
+        modelo: "Bongo",
+        anio: 2019,
+        color: "Gris",
+        vin_serial: "KNCMB7A1XK8901234",
+        centro_costo_id: "CC-1008",
+        centro_costo_nombre: "Flota - Bongo 2019 (FB-1406)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0009",
+        placa: "FB-1490",
+        marca: "Suzuki",
+        modelo: "Vitara",
+        anio: 2021,
+        color: "Verde",
+        vin_serial: "TSMLYD21SMM9012345",
+        centro_costo_id: "CC-1009",
+        centro_costo_nombre: "Flota - Vitara 2021 (FB-1490)",
+        estado: "Activo"
+      },
+      {
+        vehiculo_id: "VH-0010",
+        placa: "FB-1555",
+        marca: "Isuzu",
+        modelo: "NPR",
+        anio: 2016,
+        color: "Blanco",
+        vin_serial: "JALC4W161G0123456",
+        centro_costo_id: "CC-1010",
+        centro_costo_nombre: "Flota - NPR 2016 (FB-1555)",
+        estado: "Activo"
+      }
+    ];
+
+    const vehiculoSelect = document.getElementById("vehiculo_id");
+
+    function optionLabel(v) {
+      // Visible en dropdown: PLACA — Marca Modelo (CC-xxxx)
+      return `${v.placa} — ${v.marca} ${v.modelo} (${v.centro_costo_id})`;
+    }
+
+    // Poblar dropdown
+    for (const v of VEHICULOS.filter(x => x.estado === "Activo")) {
+      const opt = document.createElement("option");
+      opt.value = v.vehiculo_id;
+      opt.textContent = optionLabel(v);
+      vehiculoSelect.appendChild(opt);
+    }
+
+    // Al seleccionar vehículo, guardamos snapshot en hidden inputs
+    vehiculoSelect.addEventListener("change", (e) => {
+      const id = e.target.value;
+      const v = VEHICULOS.find(x => x.vehiculo_id === id);
+
+      document.getElementById("placa").value = v ? v.placa : "";
+      document.getElementById("marca").value = v ? v.marca : "";
+      document.getElementById("modelo").value = v ? v.modelo : "";
+      document.getElementById("color").value = v ? v.color : "";
+      document.getElementById("anio").value = v ? String(v.anio) : "";
+      document.getElementById("vin_serial").value = v ? v.vin_serial : "";
+      document.getElementById("centro_costo_id").value = v ? v.centro_costo_id : "";
+      document.getElementById("centro_costo_nombre").value = v ? v.centro_costo_nombre : "";
+    });
+  </script>
+
+  <!-- Mantengo tu app.js para que los datos lleguen a Trello igual que hoy -->
   <script src="app.js"></script>
 </body>
 </html>
+
 
 
 

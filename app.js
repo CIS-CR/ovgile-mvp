@@ -20,20 +20,21 @@ document.getElementById("surfForm").addEventListener("submit", async function (e
   statusEl.innerText = "Enviando solicitud...";
 
   try {
-    const resp = await fetch("https://api.ovgile.com/order", {
+    // ✅ Nuevo endpoint: Core Engine (reemplaza Trello/handler)
+    const resp = await fetch("https://ovgile.com/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
 
     if (resp.ok) {
-      // Si el Worker responde JSON { success: true, orderID }
+      // /submit responde JSON: { ok: true, id: "OV###", order: {...} }
       let payload = null;
       try {
         payload = await resp.json();
       } catch (_) {}
 
-      const ticketText = payload?.orderID ? ` Ticket: ${payload.orderID}` : "";
+      const ticketText = payload?.id ? ` Ticket: ${payload.id}` : "";
       statusEl.innerText = `Solicitud enviada con éxito.${ticketText}`;
       form.reset();
       return;
@@ -49,7 +50,6 @@ document.getElementById("surfForm").addEventListener("submit", async function (e
     statusEl.innerText = "No se pudo conectar con el servidor.";
   }
 });
-
 
 
 
